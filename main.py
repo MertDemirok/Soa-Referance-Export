@@ -18,7 +18,7 @@ try:
         sys.exit()
 
     deployedCompositeName = localPath + r'\deployed-composites.xml'
-    readXml.parseToXml(deployedCompositeName)
+    readXml.parseToXml(deployedCompositeName) 
 except:
     print("Wrong Path !!!")
     time.sleep(6)
