@@ -3,19 +3,25 @@
 # MertDemirok
 import sys
 import Common
+import time
 from sys import argv
 from Common import readXml
 from Common import writeExcelWorksheet
 
 
-# Input Xml File
-localPath = input("what is SOA Application Full local Path ? (Enter) ")
-if not (len(localPath) > 1):
-    print("Xml Argument is must")
-    sys.exit()
 
-deployedCompositeName = localPath + r'\deployed-composites.xml'
-readXml.parseToXml(deployedCompositeName)
+try:
+    # Input Xml File
+    localPath = input("what is SOA Application Full local Path ? (Enter) ")
+    if not (len(localPath) > 1):
+        print("Xml Argument is must")
+        sys.exit()
+
+    deployedCompositeName = localPath + r'\deployed-composites.xml'
+    readXml.parseToXml(deployedCompositeName)
+except:
+    print("Wrong Path !!!")
+    time.sleep(6)
 
 
 def main():
