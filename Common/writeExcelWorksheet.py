@@ -47,7 +47,7 @@ def writetoExcel(rowNub,columnNumb,data):
 def saveExcel():
     logDate = 'Current date/time: {}'.format( datetime.now() )
     now = datetime.now()
-    print(logDate,"\nExport File Path: ",home,r'\Desktop\CompositeRef'+now.strftime("%H%M%S")+'.xls')
-    wb.save(home+r'\Desktop\CompositeRef'+now.strftime("%H%M%S")+'.xls') 
+    print(logDate,"\nExport File Path: ",home,r'\Desktop\CompositeRef'+now.strftime("%d%m%Y%H%M%S")+'.xls')
+    wb.save(home+r'\Desktop\CompositeRef'+now.strftime("%d%m%Y%H%M%S")+'.xls') 
 
 

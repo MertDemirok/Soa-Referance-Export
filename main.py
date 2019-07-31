@@ -12,16 +12,18 @@ from Common import writeExcelWorksheet
 
 try:
     # Input Xml File
-    localPath = input("what is SOA Application Full local Path ? (Enter) ")
+    localPath = input("SOA Application Full local Path: ")
     if not (len(localPath) > 1):
-        print("Xml Argument is must")
+        print("SOA Application path Argument is must :(")
+        time.sleep(6)
         sys.exit()
 
-    deployedCompositeName = localPath + r'\deployed-composites.xml'
+    deployedCompositeName = localPath + r'\deployed-composites\deployed-composites.xml'
     readXml.parseToXml(deployedCompositeName) 
 except:
-    print("Wrong Path !!!")
+    print("SOA Application path Argument is must :(")
     time.sleep(6)
+    sys.exit()
 
 
 def main():
@@ -44,7 +46,7 @@ def main():
             desc_str = " %d. Composite \n %s / %s\n %s\n %s\n %s\n %s \n%s " % (self.index,self.series_Path,
                 self.name_rev, self.relational_type, self.integration_type, self.name, self.location, self.addressInfo)
         
-
+            
             writeExcelWorksheet.writetoExcel(  int(self.index) ,0, self.series_Path)
             writeExcelWorksheet.writetoExcel(  int(self.index) ,1, self.name_rev)
             writeExcelWorksheet.writetoExcel(  int(self.index) ,2, self.relational_type)
@@ -52,8 +54,10 @@ def main():
             writeExcelWorksheet.writetoExcel(  int(self.index) ,4, self.name)
             writeExcelWorksheet.writetoExcel(  int(self.index) ,5, self.location)
             writeExcelWorksheet.writetoExcel(  int(self.index) ,6, self.addressInfo)
+            
 
             print(desc_str)
+            
             print("--------------------------------")
             
     obj = composite()
@@ -94,9 +98,12 @@ def compositesParsing(compositeXml,ctObj):
         for serviceParent in compList:
             if tag_Fixing(serviceParent.tag) == "binding.ws":
                 ctObj.location = compList.get('{http://xmlns.oracle.com/soa/designer/}wsdlLocation')
+                if str(ctObj.location).find(".wsdl") > 0:
+                    ctObj.addressInfo = findAddressInfowithlocation(ctObj)
                 ctObj.integration_type = "ws"
             elif tag_Fixing(serviceParent.tag) == "binding.jca":
                 ctObj.location = serviceParent.get('config')
+                ctObj.addressInfo = ""
                 ctObj.integration_type = "jca"
 
         ctObj.description()
@@ -111,12 +118,13 @@ def compositesParsing(compositeXml,ctObj):
         for referenceParent in compList:
             if tag_Fixing(referenceParent.tag) == "binding.ws":
                     ctObj.location = referenceParent.get('location')
-                    ctObj.addressInfo = findAddressInfowithlocation(ctObj)
+                    if str(ctObj.location).find(".wsdl") > 0:
+                        ctObj.addressInfo = findAddressInfowithlocation(ctObj)
                     ctObj.integration_type = "ws"
             elif tag_Fixing(referenceParent.tag) == "binding.jca":
                     ctObj.location = referenceParent.get('config')
-                    ctObj.addressInfo = findAddressInfowithlocation(ctObj)
                     ctObj.integration_type = "jca"
+                    ctObj.addressInfo = ""
     
         ctObj.description()
 
@@ -130,7 +138,7 @@ def compositePathListing(xmlF):
 
     for composites in xmlF:
         # Composite local path preparing
-        compositePath = localPath + '\\' + \
+        compositePath = localPath + '\\deployed-composites\\' + \
             composites.get('default').replace('!', '_rev').replace(
                 '/', '\\') + '\\' + compositexmlName
         defultPaths.append(composites.get('default').split("/")[0])
@@ -139,24 +147,30 @@ def compositePathListing(xmlF):
 def findAddressInfowithlocation(obj):
 
     currentPath = ""
-    addressInfo = ""
+    addressInfo = "" 
+  
+    if str(obj.location).find("oramds:") >= 0:
+         refLocation = str(obj.location).replace('oramds:','')
+         currentPath = localPath + "\\" + refLocation
+    else:
+        currentPath = localPath +"\\deployed-composites\\"+obj.series_Path+"\\"+obj.name_rev+"\\"+obj.location
 
-    if str(obj.location).find(".wsdl") > 0:
-        currentPath = localPath +"\\"+obj.series_Path+"\\"+obj.name_rev+"\\"+obj.location
-        readXml.parseToXml(currentPath)
-        wsdlXmlData = readXml.root
+    
+    readXml.root = "" 
+    readXml.parseToXml(currentPath)
+    wsdlXmlData = readXml.root
+    
+    for wx in wsdlXmlData:
+        tagName = wx.tag.replace("{http://docs.oasis-open.org/wsbpel/2.0/plnktype}","").replace("{http://schemas.xmlsoap.org/wsdl/}","")
 
-        for wx in wsdlXmlData:
-            tagName = wx.tag.replace("{http://docs.oasis-open.org/wsbpel/2.0/plnktype}","").replace("{http://schemas.xmlsoap.org/wsdl/}","")
-
-            if tagName == "service":
-                for pwx in wx:
-                    ptagName = pwx.tag.replace("{http://schemas.xmlsoap.org/wsdl/}","")
-                    if ptagName == "port":
-                        for ppwx in pwx:
-                             addressInfo = ppwx.get('location')
-            elif tagName == "import":
-                addressInfo = wx.get("location")
+        if tagName == "service":
+            for pwx in wx:
+                ptagName = pwx.tag.replace("{http://schemas.xmlsoap.org/wsdl/}","")
+                if ptagName == "port":
+                    for ppwx in pwx:
+                            addressInfo = ppwx.get('location')
+        elif tagName == "import":
+            addressInfo = wx.get("location") + " (import Data)"
     return addressInfo
 
 def tag_Fixing(name):
